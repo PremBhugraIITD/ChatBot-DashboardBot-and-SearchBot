@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Agent WebSocket Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .chat-container { height: 400px; border: 1px solid #ddd; padding: 10px; overflow-y: auto; background: #f9f9f9; margin-bottom: 10px; border-radius: 5px; }
+        .message { margin: 5px 0; padding: 8px; border-radius: 5px; }
+        .user-message { background: #007bff; color: white; text-align: right; }
+        .status-message { background: #17a2b8; color: white; font-style: italic; }
+        .agent-routing { background: #28a745; color: white; font-weight: bold; }
+        .tool-execution { background: #ffc107; color: black; }
+        .error-message { background: #dc3545; color: white; }
+        .final-response { background: #6c757d; color: white; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .agent-selector { margin-bottom: 10px; }
+        select { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Agent WebSocket Test</h1>
+        <div class="agent-selector">
+            <label for="tokenInput">🔐 Agent Token (Required):</label>
+            <div class="input-group">
+                <input type="password" id="tokenInput" placeholder="Enter your agent authentication token..." />
+                <button onclick="connectWebSocket()" id="connectButton">Connect</button>
+                <button onclick="disconnectWebSocket()" id="disconnectButton" disabled>Disconnect</button>
+            </div>
+        </div>
+        <div class="agent-selector">
+            <label for="agentSelect">Choose Agent (optional):</label>
+            <select id="agentSelect">
+                <option value="">Auto-route (Smart)</option>
+                <option value="developer">Developer Agent</option>
+                <option value="writer">Writer Agent</option>
+                <option value="sales">Sales Agent</option>
+                <option value="general">General Agent</option>
+            </select>
+        </div>
+        <div id="chat" class="chat-container"></div>
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Type your message here..." disabled />
+            <button onclick="sendMessage()" id="sendButton" disabled>Send</button>
+            <button onclick="clearChat()">Clear</button>
+        </div>
+        <div>
+            <strong>Status:</strong> <span id="status">Disconnected</span> |
+            <strong>Session:</strong> <span id="sessionId" style="cursor: pointer; user-select: text;" title="Click to copy session ID" onclick="copySessionId()">Not connected</span>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        const chat = document.getElementById('chat');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const statusElement = document.getElementById('status');
+        const agentSelect = document.getElementById('agentSelect');
+        const sessionIdElement = document.getElementById('sessionId');
+        const tokenInput = document.getElementById('tokenInput');
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+
+        function connectWebSocket() {
+            const token = tokenInput.value.trim();
+            
+            if (!token) {
+                alert('Please enter your agent authentication token');
+                return;
+            }
+
+            // Close existing connection if any
+            if (ws) {
+                ws.close();
+            }
+
+            // Create new WebSocket connection with token
+            ws = new WebSocket(`ws://${window.location.host}/chat/ws?token=${encodeURIComponent(token)}`);
+
+            ws.onopen = function(event) {
+                statusElement.textContent = 'Connected';
+                statusElement.style.color = 'green';
+                connectButton.disabled = true;
+                disconnectButton.disabled = false;
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                tokenInput.disabled = true;
+                
+                displayMessage({
+                    type: 'status',
+                    message: '🔗 WebSocket connection established',
+                    timestamp: Date.now() / 1000
+                });
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                displayMessage(data);
+            };
+
+            ws.onclose = function(event) {
+                statusElement.textContent = 'Disconnected';
+                statusElement.style.color = 'red';
+                sessionIdElement.textContent = 'Not connected';
+                sessionIdElement.style.color = 'red';
+                connectButton.disabled = false;
+                disconnectButton.disabled = true;
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                tokenInput.disabled = false;
+                
+                displayMessage({
+                    type: 'error',
+                    message: `🔌 WebSocket disconnected: ${event.reason || 'Unknown reason'} (Code: ${event.code})`,
+                    timestamp: Date.now() / 1000
+                });
+            };
+
+            ws.onerror = function(error) {
+                statusElement.textContent = 'Error';
+                statusElement.style.color = 'red';
+                console.error('WebSocket error:', error);
+                
+                displayMessage({
+                    type: 'error',
+                    message: '❌ WebSocket connection error occurred',
+                    timestamp: Date.now() / 1000
+                });
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close(1000, 'User disconnected');
+                ws = null;
+            }
+        }
+
+        function displayMessage(data) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const timestamp = new Date(data.timestamp * 1000).toLocaleTimeString();
+            
+            switch(data.type) {
+                case 'status':
+                    messageDiv.className += ' status-message';
+                    messageDiv.innerHTML = `[${timestamp}] ${data.message}`;
+                    
+                    // Handle connection success and session ID
+                    if (data.status === 'connected' && data.session_id) {
+                        sessionIdElement.textContent = data.session_id;  // Show full session ID
+                        sessionIdElement.style.color = 'green';
+                        
+                        // Add chatbot info to the message if available
+                        if (data.chatbot_name) {
+                            const chatbotInfo = document.createElement('div');
+                            chatbotInfo.className = 'message status-message';
+                            chatbotInfo.innerHTML = `[${timestamp}] 🤖 Connected to: ${data.chatbot_name}`;
+                            chat.appendChild(chatbotInfo);
+                            
+                            if (data.chatbot_welcome_message) {
+                                const welcomeMsg = document.createElement('div');
+                                welcomeMsg.className = 'message status-message';
+                                welcomeMsg.innerHTML = `[${timestamp}] 💬 ${data.chatbot_welcome_message}`;
+                                chat.appendChild(welcomeMsg);
+                            }
+                        }
+                    }
+                    
+                    // Legacy support: Extract session ID from message text (fallback)
+                    if (data.message && data.message.includes('Session:')) {
+                        const sessionMatch = data.message.match(/Session: ([a-f0-9-]+)/);
+                        if (sessionMatch && !data.session_id) {
+                            sessionIdElement.textContent = sessionMatch[1];  // Show full session ID
+                            sessionIdElement.style.color = 'green';
+                        }
+                    }
+                    break;
+                case 'agent_routing':
+                    messageDiv.className += ' agent-routing';
+                    messageDiv.innerHTML = `[${timestamp}] ${data.message}`;
+                    break;
+                case 'tool_execution':
+                    messageDiv.className += ' tool-execution';
+                    messageDiv.innerHTML = `[${timestamp}] ${data.message}`;
+                    break;
+                case 'token':
+                    // For streaming tokens, append to last message or create new
+                    messageDiv.className += ' token-message';
+                    messageDiv.innerHTML = `[${timestamp}] Token: ${data.content}`;
+                    break;
+                case 'final_response':
+                    messageDiv.className += ' final-response';
+                    // Handle both string and object content
+                    let content = data.content;
+                    if (typeof content === 'object') {
+                        content = JSON.stringify(content, null, 2);
+                    }
+                    messageDiv.innerHTML = `[${timestamp}] <strong>${data.agent} Agent:</strong><br><pre style="white-space: pre-wrap; margin: 5px 0;">${content}</pre>`;
+                    break;
+                case 'error':
+                    messageDiv.className += ' error-message';
+                    messageDiv.innerHTML = `[${timestamp}] ❌ Error: ${data.message}`;
+                    
+                    // If authentication error, show specific guidance
+                    if (data.code === 401) {
+                        const helpDiv = document.createElement('div');
+                        helpDiv.className = 'message error-message';
+                        helpDiv.innerHTML = `[${timestamp}] 💡 <strong>Help:</strong> Please check your agent token and try again. Make sure it's valid and not expired.`;
+                        chat.appendChild(helpDiv);
+                    }
+                    break;
+                default:
+                    messageDiv.innerHTML = `[${timestamp}] ${JSON.stringify(data)}`;
+            }
+            
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Please connect to WebSocket first');
+                return;
+            }
+
+            const message = messageInput.value.trim();
+            const agentType = agentSelect.value;
+            
+            if (message) {
+                // Display user message
+                const userDiv = document.createElement('div');
+                userDiv.className = 'message user-message';
+                userDiv.innerHTML = `You: ${message}`;
+                chat.appendChild(userDiv);
+                
+                // Send to WebSocket
+                const payload = { query: message };
+                if (agentType) {
+                    payload.agent_type = agentType;
+                }
+                
+                ws.send(JSON.stringify(payload));
+                messageInput.value = '';
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+
+        function clearChat() {
+            chat.innerHTML = '';
+        }
+
+        function copySessionId() {
+            const sessionId = sessionIdElement.textContent;
+            if (sessionId && sessionId !== 'Not connected') {
+                navigator.clipboard.writeText(sessionId).then(function() {
+                    // Show temporary feedback
+                    const originalText = sessionIdElement.textContent;
+                    sessionIdElement.textContent = 'Copied!';
+                    setTimeout(() => {
+                        sessionIdElement.textContent = originalText;
+                    }, 1000);
+                }).catch(function(err) {
+                    console.error('Failed to copy session ID: ', err);
+                    alert('Failed to copy session ID to clipboard');
+                });
+            }
+        }
+
+        // Send message on Enter key
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Connect on Enter key in token input
+        tokenInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                connectWebSocket();
+            }
+        });
+
+        // Initial setup
+        window.onload = function() {
+            displayMessage({
+                type: 'status',
+                message: '🔐 Enter your agent token and click Connect to start chatting',
+                timestamp: Date.now() / 1000
+            });
+        };
+    </script>
+</body>
+</html>

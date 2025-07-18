@@ -1,0 +1,11 @@
+{
+  "name": "@mondaydotcomorg/monday-api-mcp",
+  "version": "1.4.2",
+  "description": "Monday.com MCP server integrated into Chat-Bot",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.2",
+    "@mondaydotcomorg/agent-toolkit": "*",
+    "dotenv": "^16.4.7"
+  }
+}

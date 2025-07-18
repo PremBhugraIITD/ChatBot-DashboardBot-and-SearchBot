@@ -1,0 +1,10 @@
+{
+  "name": "@mondaydotcomorg/agent-toolkit",
+  "version": "2.4.2",
+  "description": "monday.com agent toolkit",
+  "exports": {
+    "./mcp": {
+      "require": "./dist/cjs/mcp/index.js"
+    }
+  }
+}

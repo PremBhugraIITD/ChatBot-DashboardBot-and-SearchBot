@@ -1,0 +1,11 @@
+{
+  "name": "mcp-server-trello-integrated",
+  "version": "0.3.0",
+  "description": "Trello MCP server integrated into Chat-Bot",
+  "type": "module",
+  "main": "build/index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "axios": "^1.6.2"
+  }
+}

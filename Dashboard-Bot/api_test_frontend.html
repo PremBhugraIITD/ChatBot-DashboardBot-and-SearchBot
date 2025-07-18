@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Component Generator - API Test Frontend</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .section h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .section h2::before {
+            content: "🔧";
+            margin-right: 10px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .output {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .output.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .output.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            color: #6b7280;
+        }
+
+        .loading::after {
+            content: "";
+            width: 16px;
+            height: 16px;
+            margin-left: 10px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .component-display {
+            /* display: grid;
+            grid-template-columns: 1fr 1fr; */
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .code-section {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .code-section h3 {
+            color: #10b981;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .code-section pre {
+            background: #111827;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .render-section {
+            width: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .render-section h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.connected {
+            background: #10b981;
+        }
+
+        .status-indicator.disconnected {
+            background: #ef4444;
+        }
+
+        .forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .form-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .form-card h4 {
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-card p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .component-display {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Dashboard Component Generator</h1>
+            <p>API Test Frontend - Test database connection, browse forms, and generate components</p>
+        </div>
+
+        <div class="content">
+            <!-- Database Connection Section -->
+            <div class="section">
+                <h2>Database Connection</h2>
+                <div class="controls">
+                    <button class="btn" onclick="testConnection()">🔍 Test Connection</button>
+                </div>
+                <div id="connectionOutput" class="output" style="display: none;"></div>
+            </div>
+
+            <!-- Forms Listing Section -->
+            <div class="section">
+                <h2>Available Forms</h2>
+                <div class="controls">
+                    <button class="btn" onclick="listForms()">📋 List Forms</button>
+                </div>
+                <div id="formsOutput" class="output" style="display: none;"></div>
+            </div>
+
+            <!-- Component Generation Section -->
+            <div class="section">
+                <h2>Generate Component</h2>
+                <div class="input-group">
+                    <label for="authToken">Authentication Token (Required):</label>
+                    <input type="password" id="authToken" placeholder="Enter your session token for authentication" />
+                    <small style="color: #666; font-size: 0.9em;">🔐 Required for accessing workspace data securely</small>
+                </div>
+                <div class="input-group">
+                    <label for="formName">Form Name (Optional):</label>
+                    <input type="text" id="formName" placeholder="e.g., Bank Form Example (leave empty for auto-selection)" />
+                    <small style="color: #666; font-size: 0.9em;">💡 If left empty, AI will automatically select the best form based on your prompt</small>
+                </div>
+                <div class="input-group">
+                    <label for="userPrompt">User Prompt (Required):</label>
+                    <textarea id="userPrompt" rows="3" placeholder="e.g., Give me a pie chart showing distribution of people with different account types"></textarea>
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="generateComponent()">🎯 Generate Component</button>
+                    <button class="btn danger" onclick="clearResults()">🗑️ Clear Results</button>
+                </div>
+                <div id="componentOutput" class="output" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8001';
+
+        // Utility functions
+        function showLoading(elementId, message = 'Loading...') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'output';
+            element.innerHTML = `<div class="loading">${message}</div>`;
+        }
+
+        function showSuccess(elementId, content) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'output success';
+            element.innerHTML = content;
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'output error';
+            element.innerHTML = `<strong>Error:</strong> ${message}`;
+        }
+
+        // Test database connection
+        async function testConnection() {
+            showLoading('connectionOutput', 'Testing database connection...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat/forms/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const status = data.backend_status === 'connected' ? 'connected' : 'disconnected';
+                    const statusClass = status === 'connected' ? 'success' : 'error';
+                    
+                    showSuccess('connectionOutput', `
+                        <h3><span class="status-indicator ${status}"></span>Connection Status</h3>
+                        <p><strong>Service:</strong> ${data.service}</p>
+                        <p><strong>Version:</strong> ${data.version}</p>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Backend:</strong> ${data.backend_status}</p>
+                    `);
+                } else {
+                    showError('connectionOutput', `Failed to connect: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                showError('connectionOutput', `Network error: ${error.message}`);
+            }
+        }
+
+        // List available forms
+        async function listForms() {
+            const authToken = document.getElementById('authToken').value.trim();
+            
+            if (!authToken) {
+                showError('formsOutput', 'Authentication token is required');
+                return;
+            }
+            
+            showLoading('formsOutput', 'Loading available forms...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat/forms/list`, {
+                    method: 'GET',
+                    headers: {
+                        'token': authToken
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    let formsHtml = `
+                        <h3>📊 Available Forms (${data.count} total)</h3>
+                        <div style="margin: 15px 0; padding: 15px; background: #e8f5e8; border-radius: 6px;">
+                            <p><strong>🔐 Workspace:</strong> ${data.workspace_id} | <strong>👤 User:</strong> ${data.user}</p>
+                        </div>
+                        <div class="forms-grid">
+                    `;
+                    
+                    data.forms.forEach(form => {
+                        formsHtml += `
+                            <div class="form-card" onclick="selectForm('${form.OBJECT_NAME}')">
+                                <h4>${form.OBJECT_NAME}</h4>
+                                <p>Table: ${form.SECONDARY_TABLE}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    formsHtml += '</div>';
+                    showSuccess('formsOutput', formsHtml);
+                } else {
+                    showError('formsOutput', data.error || 'Failed to load forms');
+                }
+            } catch (error) {
+                showError('formsOutput', `Network error: ${error.message}`);
+            }
+        }
+
+        // Select a form (helper function)
+        function selectForm(formName) {
+            document.getElementById('formName').value = formName;
+            document.getElementById('formName').focus();
+        }
+
+        // Generate component
+        async function generateComponent() {
+            const authToken = document.getElementById('authToken').value.trim();
+            const formName = document.getElementById('formName').value.trim();
+            const userPrompt = document.getElementById('userPrompt').value.trim();
+            
+            if (!authToken) {
+                showError('componentOutput', 'Authentication token is required');
+                return;
+            }
+            
+            if (!userPrompt) {
+                showError('componentOutput', 'User prompt is required');
+                return;
+            }
+            
+            showLoading('componentOutput', 'Generating component...');
+            
+            try {
+                // Build request payload - only include form_name if provided
+                const requestPayload = {
+                    user_prompt: userPrompt,
+                    max_components: 1  // Only generate one component
+                };
+                
+                // Only include form_name if it's provided
+                if (formName) {
+                    requestPayload.form_name = formName;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/chat/forms/generate-components`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': authToken
+                    },
+                    body: JSON.stringify(requestPayload)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    if (data.components && data.components.length > 0) {
+                        // Get the first (and only) component
+                        const component = data.components[0];
+                        displayComponent(data, component);
+                    } else {
+                        showError('componentOutput', 'No components were generated');
+                    }
+                } else {
+                    showError('componentOutput', data.error || 'Failed to generate component');
+                }
+            } catch (error) {
+                showError('componentOutput', `Network error: ${error.message}`);
+            }
+        }
+
+        // Display component with both HTML code and rendered output
+        function displayComponent(apiResponse, component) {
+            const outputElement = document.getElementById('componentOutput');
+            const formName = document.getElementById('formName').value.trim();
+            outputElement.style.display = 'block';
+            outputElement.className = 'output success';
+            
+            // Format the HTML code for display
+            const formattedHtml = component.html
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n\s*/g, '\n');
+            
+            outputElement.innerHTML = `
+                <h3>✅ Component Generated Successfully</h3>
+                <div style="margin: 15px 0; padding: 15px; background: #f3f4f6; border-radius: 6px;">
+                    <p><strong>🔐 Workspace:</strong> ${apiResponse.workspace_id} | <strong>👤 User:</strong> ${apiResponse.user}</p>
+                    <p><strong>Selected Form:</strong> ${apiResponse.selected_form} ${apiResponse.selected_form !== formName && !formName ? '(Auto-selected by AI)' : ''}</p>
+                    <p><strong>Component Type:</strong> ${component.type}</p>
+                    <p><strong>Title:</strong> ${component.title}</p>
+                    <p><strong>Generation Time:</strong> ${apiResponse.generation_time}s</p>
+                    <p><strong>Data Records:</strong> ${component.data_summary.record_count}</p>
+                </div>
+                
+                <div class="component-display">
+                    <div class="code-section">
+                        <h3>📝 HTML Code</h3>
+                        <pre>${formattedHtml}</pre>
+                        <button class="btn" onclick="copyToClipboard(\`${component.html.replace(/`/g, '\\`')}\`)">📋 Copy HTML</button>
+                    </div>
+                    
+                    <div class="render-section">
+                        <h3>🖼️ Rendered Component</h3>
+                        <div id="renderedComponent"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Render the component properly by executing scripts
+            renderComponentHTML(component.html);
+        }
+        
+        // Function to properly render HTML with script execution
+        function renderComponentHTML(htmlContent) {
+            const renderContainer = document.getElementById('renderedComponent');
+            
+            // Create a temporary container to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            
+            // Extract and execute scripts separately
+            const scripts = tempDiv.querySelectorAll('script');
+            const scriptContents = [];
+            
+            // Remove scripts from the HTML and store their content
+            scripts.forEach(script => {
+                if (script.src) {
+                    // External script - we already have Chart.js loaded
+                    script.remove();
+                } else {
+                    // Inline script - store content and remove
+                    scriptContents.push(script.innerHTML);
+                    script.remove();
+                }
+            });
+            
+            // Insert the HTML without scripts
+            renderContainer.innerHTML = tempDiv.innerHTML;
+            
+            // Execute the stored scripts
+            scriptContents.forEach(scriptContent => {
+                try {
+                    // Use Function constructor to execute in global scope
+                    const func = new Function(scriptContent);
+                    func();
+                } catch (error) {
+                    console.error('Error executing component script:', error);
+                    renderContainer.innerHTML += `<div style="color: red; padding: 10px; border: 1px solid red; margin: 10px 0;">
+                        <strong>Script Execution Error:</strong> ${error.message}
+                    </div>`;
+                }
+            });
+        }
+
+        // Copy HTML to clipboard
+        async function copyToClipboard(html) {
+            try {
+                await navigator.clipboard.writeText(html);
+                // Show temporary success message
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            } catch (error) {
+                alert('Failed to copy to clipboard: ' + error.message);
+            }
+        }
+
+        // Clear all results
+        function clearResults() {
+            ['connectionOutput', 'formsOutput', 'componentOutput'].forEach(id => {
+                const element = document.getElementById(id);
+                element.style.display = 'none';
+                element.innerHTML = '';
+            });
+            
+            document.getElementById('formName').value = '';
+            document.getElementById('userPrompt').value = '';
+            document.getElementById('authToken').value = '';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Dashboard Component Generator Frontend Loaded');
+            console.log('API Base URL:', API_BASE_URL);
+            
+            // Test connection on page load
+            testConnection();
+        });
+    </script>
+</body>
+</html>

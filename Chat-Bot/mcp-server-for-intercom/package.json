@@ -1,0 +1,14 @@
+{
+  "name": "mcp-server-for-intercom",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.3",
+    "express": "^5.1.0",
+    "zod": "^3.22.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "atoms-api-mcp",
+  "version": "1.0.0",
+  "description": "Atoms API MCP Server",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.1",
+    "node": "^24.4.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^24.0.13"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

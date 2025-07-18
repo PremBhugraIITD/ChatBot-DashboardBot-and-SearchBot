@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Bot - Knowledge Base Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .workspace-field {
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .workspace-field:focus {
+            border-color: #667eea;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1);
+            }
+        }
+
+        .summary-button {
+            margin: 10px 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .summary-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin-top: 50px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Search Bot</h1>
+            <p>Search your knowledge base with AI-powered intelligence</p>
+        </div>
+
+        <button class="summary-button" onclick="showSummary()">📊 Show Knowledge Base Summary</button>
+        <button class="summary-button" onclick="testDatabaseConnections()" style="margin-left: 10px;">🔧 Test Database Connections</button>
+
+        <div class="chat-container" id="chatContainer">        <div class="welcome-message">
+            👋 Welcome! Enter your authentication token and ask me anything about your pages.<br>
+            I can search through all pages in your workspace to find the information you need.
+        </div>
+        </div>
+
+        <div class="input-container">
+            <form class="input-form" onsubmit="sendMessage(event)">
+                <input 
+                    type="password" 
+                    class="workspace-field" 
+                    id="tokenInput" 
+                    placeholder="Authentication Token"
+                    required
+                    style="flex: 0 0 200px; margin-right: 10px;"
+                >
+                <input 
+                    type="text" 
+                    class="input-field" 
+                    id="messageInput" 
+                    placeholder="Ask me anything about your pages..."
+                    required
+                >
+                <button type="submit" class="send-button" id="sendButton">
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const tokenInput = document.getElementById('tokenInput');
+        const sendButton = document.getElementById('sendButton');
+
+        let currentWorkspaceInfo = null; // Store workspace info from authentication
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = isUser ? content : `<pre>${content}</pre>`;
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot';
+            loadingDiv.id = 'loading-message';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content loading';
+            contentDiv.innerHTML = `
+                Searching knowledge base
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            `;
+            
+            loadingDiv.appendChild(contentDiv);
+            chatContainer.appendChild(loadingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function removeLoading() {
+            const loadingMessage = document.getElementById('loading-message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            const query = messageInput.value.trim();
+            const token = tokenInput.value.trim();
+            
+            if (!query || !token) {
+                addMessage("Please provide both an authentication token and a search query.", false);
+                return;
+            }
+
+            // Clear welcome message
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
+            // Add user message with workspace info if available
+            const workspaceDisplay = currentWorkspaceInfo ? 
+                `[${currentWorkspaceInfo.workspace_name || currentWorkspaceInfo.workspace_id}] ` : '';
+            addMessage(`${workspaceDisplay}${query}`, true);
+            
+            // Clear input and disable button
+            messageInput.value = '';
+            sendButton.disabled = true;
+            
+            // Show loading
+            showLoading();
+
+            try {
+                const response = await fetch('/chat/pages/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': token
+                    },
+                    body: JSON.stringify({ 
+                        query: query
+                    })
+                });
+
+                const data = await response.json();
+                
+                removeLoading();
+                
+                if (data.success) {
+                    // Store workspace info for future messages
+                    currentWorkspaceInfo = {
+                        workspace_id: data.workspace_id,
+                        workspace_name: data.workspace_name,
+                        user: data.user
+                    };
+                    addMessage(data.answer);
+                } else {
+                    addMessage(`Error: ${data.error}`);
+                }
+                
+            } catch (error) {
+                removeLoading();
+                addMessage(`Error: ${error.message}`);
+            } finally {
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        async function showSummary() {
+            const token = tokenInput.value.trim();
+            
+            if (!token) {
+                addMessage("Please enter an authentication token first", false);
+                return;
+            }
+
+            // Clear welcome message
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
+            const workspaceDisplay = currentWorkspaceInfo ? 
+                `[${currentWorkspaceInfo.workspace_name || currentWorkspaceInfo.workspace_id}] ` : '';
+            addMessage(`${workspaceDisplay}Show me a summary of the knowledge base`, true);
+            showLoading();
+
+            try {
+                const response = await fetch('/chat/pages/summary', {
+                    method: 'GET',
+                    headers: {
+                        'token': token
+                    }
+                });
+                const data = await response.json();
+                
+                removeLoading();
+                
+                if (data.success) {
+                    // Store workspace info for future messages
+                    currentWorkspaceInfo = {
+                        workspace_id: data.workspace_id,
+                        workspace_name: data.workspace_name,
+                        user: data.user
+                    };
+                    addMessage(data.summary);
+                } else {
+                    addMessage(`Error: ${data.error}`);
+                }
+                
+            } catch (error) {
+                removeLoading();
+                addMessage(`Error: ${error.message}`);
+            }
+        }
+
+        async function testDatabaseConnections() {
+            // Clear welcome message
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
+            addMessage("Testing database connections...", true);
+            showLoading();
+
+            try {
+                const response = await fetch('/chat/pages/test-database-connections', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                removeLoading();
+                
+                if (data.success) {
+                    let resultMessage = "🔧 Database Connection Test Results:\n\n";
+                    
+                    // MySQL Results
+                    const mysqlStatus = data.connections.mysql.status === 'success' ? '✅' : '❌';
+                    resultMessage += `${mysqlStatus} MySQL: ${data.connections.mysql.message}\n`;
+                    
+                    // MongoDB Results
+                    const mongoStatus = data.connections.mongodb.status === 'success' ? '✅' : '❌';
+                    resultMessage += `${mongoStatus} MongoDB: ${data.connections.mongodb.message}`;
+                    
+                    if (data.connections.mongodb.version) {
+                        resultMessage += ` (v${data.connections.mongodb.version})`;
+                    }
+                    
+                    addMessage(resultMessage);
+                } else {
+                    addMessage(`Error testing connections: ${data.error}`);
+                }
+                
+            } catch (error) {
+                removeLoading();
+                addMessage(`Error: ${error.message}`);
+            }
+        }
+
+        // Focus on input when page loads
+        messageInput.focus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "gmail-server",
+  "version": "0.1.0",
+  "description": "A Model Context Protocol server for Gmail",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "gmail-server": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
+    "@modelcontextprotocol/sdk": "0.6.0",
+    "googleapis": "^144.0.0"
+  }
+}

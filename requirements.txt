@@ -1,0 +1,129 @@
+# Consolidated Requirements for AI Agent System - RESOLVED VERSION
+# Resolves all dependency conflicts between universal-mcp, gql, elevenlabs, and websockets
+
+# Core MCP Dependencies
+mcp[cli]>=1.6.0
+langchain-mcp-adapters>=0.1.1
+# universal_mcp>=0.1.22  # Temporarily disabled due to gql conflicts
+
+# LangChain Dependencies  
+langchain>=0.3.25
+langchain-community>=0.3.24
+langchain-core>=0.3.61
+langchain-openai>=0.3.18
+
+# OpenAI API
+openai>=1.82.0
+
+# LlamaIndex Dependencies (for Knowledge Base)
+llama-index>=0.12.39
+llama-index-core>=0.12.39
+llama-index-embeddings-openai>=0.3.1
+llama-index-llms-openai>=0.4.0
+llama-index-readers-file>=0.4.8
+llama-index-vector-stores-chroma>=0.4.2
+
+# Data serialization for LlamaIndex
+dataclasses-json>=0.6.7
+
+# AWS S3 Integration
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Google API Dependencies
+google-api-python-client>=2.170.0
+google-auth>=2.40.2
+google-auth-oauthlib>=1.2.2
+google-auth-httplib2>=0.2.0
+googleapis-common-protos>=1.70.0
+
+# HTTP and Web Dependencies
+httpx>=0.28.1
+requests>=2.32.3
+urllib3>=2.0.0
+
+# Web Framework Dependencies
+fastapi==0.115.12
+uvicorn>=0.34.0
+# Fixed websockets version to resolve conflicts
+websockets>=11.0,<12.0
+aiohttp>=3.8.0
+
+# Flask Dependencies (for Dashboard-Bot and Search-Bot)
+flask>=2.3.3
+flask-cors>=4.0.0
+
+# Environment Configuration
+python-dotenv>=1.1.0
+
+# Core Python Dependencies
+anyio>=4.7.0
+pydantic>=2.0.0
+
+# Database Dependencies
+pymongo>=4.13.0
+mysql-connector-python>=8.1.0
+aiomysql>=0.2.0
+
+# Data Analysis and Visualization (Dashboard-Bot)
+pandas>=2.1.4
+numpy>=1.24.0
+matplotlib>=3.7.3
+seaborn>=0.12.0
+plotly>=5.17.0
+
+# Streamlit (Dashboard-Bot)
+streamlit>=1.28.0
+watchdog>=3.0.0
+
+# Salesforce MCP Server Dependencies
+simple-salesforce>=1.12.6
+
+# OCR Dependencies
+pytesseract>=0.3.10
+opencv-python>=4.8.0
+pillow>=10.0.0
+
+# Playwright Browser Automation Dependencies
+playwright>=1.40.0
+pdf2image>=1.16.3
+PyPDF2>=3.0.1
+beautifulsoup4>=4.12.2
+lxml>=4.9.3
+markdown>=3.5.1
+html2text>=2024.2.26
+
+# WhatsApp MCP Server Dependencies
+click>=8.0.0
+whatsapp-api-client-python==0.0.49
+
+# CAPTCHA Solver MCP Server Dependencies
+google-generativeai>=0.8.0
+
+# Zoho Books MCP Server Dependencies
+email-validator>=2.0.0
+structlog>=23.1.0
+starlette>=0.27.0
+
+# Testing Dependencies
+pytest>=7.0.0
+pytest-cov>=4.1.0
+pytest-httpx>=0.25.0
+pytest-asyncio>=0.21.0
+
+# ElevenLabs MCP Server Dependencies (with compatible websockets)
+elevenlabs>=2.7.1
+fuzzywuzzy>=0.18.0
+
+# GraphQL dependencies (for universal-mcp compatibility)
+gql>=3.5.2,<3.6.0
+
+# Microsoft Teams MCP Server Dependencies
+botbuilder-core>=4.17.0
+botbuilder-integration-aiohttp>=4.17.0
+msgraph-sdk>=1.31.0
+
+# QuickBooks Time MCP Server Dependencies
+httpx-sse>=0.4.0
+sse-starlette>=1.6.1
+zenpy
